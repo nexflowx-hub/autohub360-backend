@@ -13,6 +13,7 @@ const schema = z.object({
   REDIS_URL: z.string().url().default('redis://autohub360-redis:6379'),
   SUPABASE_URL: optionalUrl,
   SUPABASE_SERVICE_ROLE_KEY: optionalSecret,
+  INTERNAL_API_TOKEN: optionalSecret,
   CORS_ORIGINS: z.string().default('https://autohub360.store,https://autohub360.tech,https://admin.autohub360.tech'),
 });
 
