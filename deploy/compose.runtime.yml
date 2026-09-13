@@ -1,0 +1,65 @@
+x-runtime: &runtime
+  build:
+    context: ..
+    dockerfile: Dockerfile
+  image: autohub360-backend:0.1.0
+  restart: unless-stopped
+  env_file:
+    - /srv/secrets/autohub360/backend.env
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m,mode=1777
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: '3'
+
+services:
+  api:
+    <<: *runtime
+    container_name: autohub360-api
+    command: ['node', 'dist/server.js']
+    mem_limit: 512m
+    networks:
+      platform_edge:
+        aliases:
+          - autohub360-api
+      autohub_internal: {}
+      autohub_egress: {}
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:8090/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  worker:
+    <<: *runtime
+    container_name: autohub360-worker
+    command: ['node', 'dist/worker.js']
+    mem_limit: 512m
+    networks:
+      autohub_internal: {}
+      autohub_egress: {}
+
+  scheduler:
+    <<: *runtime
+    container_name: autohub360-scheduler
+    command: ['node', 'dist/scheduler.js']
+    mem_limit: 256m
+    networks:
+      autohub_internal: {}
+      autohub_egress: {}
+
+networks:
+  platform_edge:
+    external: true
+  autohub_internal:
+    external: true
+  autohub_egress:
+    external: true
