@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireInternalAuth } from '../internal-auth.js';
 import { supabaseService } from '../supabase.js';
 
+const protectedRoute = { preHandler: requireInternalAuth } as const;
 const limitSchema = z.coerce.number().int().min(1).max(100).default(50);
 const shipmentEventSchema = z.object({
   status: z.enum(['created', 'labeled', 'in_transit', 'out_for_delivery', 'delivered', 'exception', 'returned']),
@@ -19,9 +20,7 @@ function parseLimit(input: unknown) {
 }
 
 export async function registerAdminOperationRoutes(app: FastifyInstance) {
-  app.addHook('preHandler', requireInternalAuth);
-
-  app.get('/api/v1/admin/crm/contacts', async (request) => {
+  app.get('/api/v1/admin/crm/contacts', protectedRoute, async (request) => {
     const { stage } = request.query as { stage?: string };
     const db = supabaseService();
     let query = db
@@ -35,7 +34,7 @@ export async function registerAdminOperationRoutes(app: FastifyInstance) {
     return { success: true, data: data ?? [] };
   });
 
-  app.get('/api/v1/admin/orders', async (request) => {
+  app.get('/api/v1/admin/orders', protectedRoute, async (request) => {
     const { status } = request.query as { status?: string };
     const db = supabaseService();
     let query = db
@@ -49,7 +48,7 @@ export async function registerAdminOperationRoutes(app: FastifyInstance) {
     return { success: true, data: data ?? [] };
   });
 
-  app.get('/api/v1/admin/shipments', async (request) => {
+  app.get('/api/v1/admin/shipments', protectedRoute, async (request) => {
     const { status } = request.query as { status?: string };
     const db = supabaseService();
     let query = db
@@ -63,7 +62,7 @@ export async function registerAdminOperationRoutes(app: FastifyInstance) {
     return { success: true, data: data ?? [] };
   });
 
-  app.post('/api/v1/admin/shipments/:id/events', async (request, reply) => {
+  app.post('/api/v1/admin/shipments/:id/events', protectedRoute, async (request, reply) => {
     const { id } = request.params as { id: string };
     const parsed = shipmentEventSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -89,7 +88,7 @@ export async function registerAdminOperationRoutes(app: FastifyInstance) {
     return reply.code(201).send({ success: true, data });
   });
 
-  app.get('/api/v1/admin/automations/outbox', async (request) => {
+  app.get('/api/v1/admin/automations/outbox', protectedRoute, async (request) => {
     const { status } = request.query as { status?: string };
     const db = supabaseService();
     let query = db
@@ -103,7 +102,7 @@ export async function registerAdminOperationRoutes(app: FastifyInstance) {
     return { success: true, data: data ?? [] };
   });
 
-  app.post('/api/v1/admin/automations/outbox/:id/retry', async (request, reply) => {
+  app.post('/api/v1/admin/automations/outbox/:id/retry', protectedRoute, async (request, reply) => {
     const { id } = request.params as { id: string };
     const db = supabaseService();
     const { data, error } = await db
