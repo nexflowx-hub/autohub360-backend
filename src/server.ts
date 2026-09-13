@@ -2,6 +2,8 @@ import cors from '@fastify/cors';
 import Fastify from 'fastify';
 import { corsOrigins, env } from './config.js';
 import { createRedis, redisStatus } from './redis.js';
+import { registerAdminOperationRoutes } from './routes/admin-operations.js';
+import { registerPublicTrackingRoutes } from './routes/public-tracking.js';
 import { supabaseConfigured, supabaseStatus } from './supabase.js';
 
 const app = Fastify({ logger: { level: env.LOG_LEVEL } });
@@ -52,6 +54,9 @@ app.get('/api/v1/system/capabilities', async () => ({
     ],
   },
 }));
+
+await registerPublicTrackingRoutes(app);
+await registerAdminOperationRoutes(app);
 
 async function shutdown(signal: string) {
   app.log.info({ signal }, 'Graceful shutdown');
