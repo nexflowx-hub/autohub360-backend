@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 import { env } from './config.js';
 
 export function createRedis(connectionName: string) {
